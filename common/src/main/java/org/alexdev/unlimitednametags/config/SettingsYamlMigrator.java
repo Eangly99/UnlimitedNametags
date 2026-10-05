@@ -74,6 +74,7 @@ public final class SettingsYamlMigrator {
             return;
         }
 
+        changed |= root.keySet().remove("headTextures");
         changed |= renameObsoleteLinesGroupsKey(root, log);
         changed |= sanitizePlaceholdersReplacements(root, log);
         for (int v = from; v < SettingsConfigVersion.CURRENT; v++) {

@@ -1280,10 +1280,8 @@ public class NameTagManager implements UntNametagManagerPaper {
     }
 
     private boolean isItemVisible(@NotNull Player player, @NotNull Settings.DisplayGroup group) {
-        final String material = group.itemMaterial() == null || group.itemMaterial().isBlank()
-                ? "STONE" : group.itemMaterial();
-        return plugin.getNametagMaterialBridge().resolveItemStack(player.getUniqueId(), material,
-                group.customModelData(), group.itemModel(), group.nexoId()) != null;
+        return plugin.getNametagMaterialBridge().resolveItemStack(player.getUniqueId(), group.effectiveItemMaterial(),
+                group.customModelData(), group.itemModel(), group.nexoId(), group.headTexture()) != null;
     }
 
     private float estimateDisplayGroupHeight(@NotNull ResolvedDisplayRow row, float lineHeight) {

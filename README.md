@@ -24,6 +24,8 @@ Custom stacked nametags for Paper servers: text, item, and block display rows wi
 - Multiple stacked `displayGroups` per player.
 - TEXT rows with structured lines and optional per-line `when` conditions.
 - ITEM and BLOCK rows with configurable material, scale, offset, billboard, glow, and animations.
+- Player head ITEM rows using the owner's skin, custom Base64/URL textures, or country flag texture keys.
+- Inline `%flag%` / `%flags%` images in TEXT rows, with Cambodia as the fallback.
 - PlaceholderAPI, MiniPlaceholders, vanish integrations, Geyser support notes, and hook support for common cosmetic plugins.
 - Config migration through `configVersion` and `SettingsYamlMigrator`.
 
@@ -75,6 +77,65 @@ displayGroups:
     scale: 1.0
     yOffset: 1.0
 ```
+
+## Inline country flags
+
+Put `%flag%` or its alias `%flags%` directly in any TEXT line:
+
+```yaml
+- text: '%flags% &fTeam: &8[%zelteams_team_name_colored%&8]'
+```
+
+Both placeholders insert a flag image before the team text. With no country lookup
+or an unsupported country, the flag defaults to Cambodia.
+Use `behavior.format: LEGACY` or `UNIVERSAL` for the `&` color codes in this example.
+
+Inline images use Minecraft's native [player head text components](https://jd.advntr.dev/api/latest/net/kyori/adventure/text/object/PlayerHeadObjectContents.html),
+supported by Minecraft **1.21.9+** clients. No resource pack or separate ITEM row is required.
+
+To select the flag from the owner's IP, install PlaceholderAPI and its
+[Geolocation expansion](https://api.extendedclip.com/expansions/geolocation/) with
+`/papi ecloud download Geolocation` and `/papi reload`. The plugin reads
+`%geolocation_countryCode%` automatically. Cambodia (`flag_KH`) and the US (`flag_US`)
+are built into the code; no texture configuration is needed. Other countries fall back to Cambodia.
+The obsolete `headTextures` section is removed on startup/reload after backing up the settings file.
+The Cambodia texture is from [MC-Heads](https://mc-heads.com/skulls/4672d426-53d9-49e8-b84c-41af7764fe77).
+
+## Head texture ITEM rows
+
+Add these rows under `nameTags.default.displayGroups` in `settings.yml`:
+
+```yaml
+nameTags:
+  default:
+    displayGroups:
+      - displayType: ITEM
+        headTexture: owner
+        scale: 0.5
+        yOffset: 0.8
+      - displayType: ITEM
+        headTexture: "flag_%geolocation_countryCode%"
+        scale: 0.5
+        yOffset: 1.3
+```
+
+`headTexture` accepts `owner`, a Base64 `textures` property, a Minecraft texture URL,
+or a built-in flag key (`flag_KH` or `flag_US`). It expands placeholders for the nametag owner.
+Omitting `itemMaterial` selects `PLAYER_HEAD` when a texture is configured; explicit
+materials must be `PLAYER_HEAD`. The existing `itemDisplayMode` defaults to `HEAD`.
+Nexo items keep precedence and ignore `headTexture`.
+
+Country detection uses the player's IP through [PlaceholderAPI's Geolocation expansion](https://api.extendedclip.com/expansions/geolocation/).
+With PlaceholderAPI installed, run `/papi ecloud download Geolocation` and `/papi reload`.
+The expansion handles the IP lookup; UnlimitedNameTags selects the built-in texture.
+Cambodia and the US are included in code. The US texture comes from [Minecraft Heads](https://minecraft-heads.com/custom-heads/head/70017-united-states-of-america).
+Other GeoIP plugins can supply a country-code placeholder in the same way.
+Unresolved placeholders, missing texture keys, and invalid textures clear the row;
+compact stacking leaves no gap for it. IP geolocation reflects the connecting IP,
+including VPN/proxy addresses, rather than a player's nationality. Apply config changes with `/unt reload`.
+
+For Java integrations, use `Settings.DisplayGroup.builder().displayType(NametagDisplayType.ITEM).headTexture("owner").build()`.
+Both previous `DisplayGroup` constructors remain available for compiled integrations.
 
 ## Support
 

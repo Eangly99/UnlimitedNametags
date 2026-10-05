@@ -73,13 +73,9 @@ class ItemPacketNameTag extends PacketNameTag {
     }
 
     private void applyItemFromGroup(@NotNull Settings.DisplayGroup group) {
-        String raw = group.itemMaterial();
-        if (raw == null || raw.isBlank()) {
-            raw = "STONE";
-        }
-        final String expanded = getRuntime().expandPlaceholdersForOwner(getOwnerId(), raw);
+        final String expanded = getRuntime().expandPlaceholdersForOwner(getOwnerId(), group.effectiveItemMaterial());
         final Object resolved = getMaterials().resolveItemStack(getOwnerId(), expanded,
-                group.customModelData(), group.itemModel(), group.nexoId());
+                group.customModelData(), group.itemModel(), group.nexoId(), group.headTexture());
         final ItemStack peStack = resolved instanceof ItemStack stack ? stack : ItemStack.EMPTY;
         final ItemDisplayMeta.DisplayType displayType = parseItemDisplayMode(group.itemDisplayMode());
         getPerPlayerEntity().execute(e -> {

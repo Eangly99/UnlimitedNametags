@@ -20,6 +20,11 @@ import java.util.function.UnaryOperator;
 @Getter
 public class Settings {
 
+    public static final String CAMBODIA_FLAG_TEXTURE = "https://textures.minecraft.net/texture/16c526f9a335b62febe4ef3734be060e9a4906ab1792e2278b898afcfd515ea8";
+    public static final Map<String, String> FLAG_TEXTURES = Map.of(
+            "flag_KH", CAMBODIA_FLAG_TEXTURE,
+            "flag_US", "https://textures.minecraft.net/texture/46c9923bebd9ad90a80a0731c3f3b9db729b0785015e18e3ec07e4e91099be06");
+
     @Comment({
             "Schema version for settings.yml (managed by the plugin; do not lower).",
             "1 = flat NameTag, 2 = displayGroups with string lines, 3 = displayGroups with structured lines,",
@@ -367,7 +372,9 @@ public class Settings {
             @Nullable Integer animationInterval,
             @Nullable AbstractDisplayMeta.BillboardConstraints billboard,
             @Nullable GlowOverride glow,
-            @Nullable Integer glowInterval) {
+            @Nullable Integer glowInterval,
+            @Comment("ITEM player head texture: Base64 textures property, textures.minecraft.net URL, or owner. Supports owner placeholders.")
+            @Nullable String headTexture) {
 
         public DisplayGroup {
             final NametagDisplayType resolved = displayType != null ? displayType : NametagDisplayType.TEXT;
@@ -383,6 +390,19 @@ public class Settings {
                         .toList();
             }
             background = isRedundantOmittedBackground(background) ? null : background;
+        }
+
+        /** Binary-compatible constructor for integrations compiled before head textures were added. */
+        public DisplayGroup(List<NametagLine> lines, @Nullable Background background, float scale, float yOffset,
+                @Nullable String when, boolean relationalConditions, @Nullable NametagDisplayType displayType,
+                @Nullable String itemMaterial, @Nullable Integer customModelData, @Nullable String itemModel,
+                @Nullable String nexoId, @Nullable String blockMaterial, @Nullable String itemDisplayMode,
+                @Nullable DisplayAnimation animation, @Nullable Integer animationInterval,
+                @Nullable AbstractDisplayMeta.BillboardConstraints billboard, @Nullable GlowOverride glow,
+                @Nullable Integer glowInterval) {
+            this(lines, background, scale, yOffset, when, relationalConditions, displayType, itemMaterial,
+                    customModelData, itemModel, nexoId, blockMaterial, itemDisplayMode, animation,
+                    animationInterval, billboard, glow, glowInterval, null);
         }
 
         /**
@@ -413,6 +433,12 @@ public class Settings {
         @NotNull
         public NametagDisplayType resolvedDisplayType() {
             return displayType != null ? displayType : NametagDisplayType.TEXT;
+        }
+
+        @NotNull
+        public String effectiveItemMaterial() {
+            return itemMaterial != null && !itemMaterial.isBlank() ? itemMaterial
+                    : headTexture != null && !headTexture.isBlank() ? "PLAYER_HEAD" : "STONE";
         }
 
         /**
@@ -482,7 +508,7 @@ public class Settings {
         }
 
         public DisplayGroup withLines(@NotNull List<NametagLine> lines) {
-            return new DisplayGroup(lines, background, scale, yOffset, when, relationalConditions, displayType, itemMaterial, customModelData, itemModel, nexoId, blockMaterial, itemDisplayMode, animation, animationInterval, billboard, glow, glowInterval);
+            return new DisplayGroup(lines, background, scale, yOffset, when, relationalConditions, displayType, itemMaterial, customModelData, itemModel, nexoId, blockMaterial, itemDisplayMode, animation, animationInterval, billboard, glow, glowInterval, headTexture);
         }
 
         public DisplayGroup withWhen(@Nullable String when) {
@@ -525,7 +551,7 @@ public class Settings {
                 @Nullable AbstractDisplayMeta.BillboardConstraints billboard,
                 @Nullable GlowOverride glow,
                 @Nullable Integer glowInterval) {
-            return new DisplayGroup(lines, background, scale, yOffset, when, relationalConditions, displayType, itemMaterial, customModelData, itemModel, nexoId, blockMaterial, itemDisplayMode, animation, animationInterval, billboard, glow, glowInterval);
+            return new DisplayGroup(lines, background, scale, yOffset, when, relationalConditions, displayType, itemMaterial, customModelData, itemModel, nexoId, blockMaterial, itemDisplayMode, animation, animationInterval, billboard, glow, glowInterval, headTexture);
         }
 
         // ─── Builder ──────────────────────────────────────────────────────────
@@ -559,6 +585,7 @@ public class Settings {
             private @Nullable AbstractDisplayMeta.BillboardConstraints billboard = null;
             private @Nullable GlowOverride glow = null;
             private @Nullable Integer glowInterval = null;
+            private @Nullable String headTexture = null;
 
             private Builder() {
             }
@@ -582,6 +609,7 @@ public class Settings {
                 this.billboard = base.billboard();
                 this.glow = base.glow();
                 this.glowInterval = base.glowInterval();
+                this.headTexture = base.headTexture();
             }
 
             public Builder line(@NotNull String text) {
@@ -649,6 +677,11 @@ public class Settings {
                 return this;
             }
 
+            public Builder headTexture(@Nullable String texture) {
+                this.headTexture = texture;
+                return this;
+            }
+
             public Builder blockMaterial(@Nullable String mat) {
                 this.blockMaterial = mat;
                 return this;
@@ -687,7 +720,7 @@ public class Settings {
             @NotNull
             public DisplayGroup build() {
                 return new DisplayGroup(List.copyOf(lines), background, scale, yOffset, when, relationalConditions,
-                        displayType, itemMaterial, customModelData, itemModel, nexoId, blockMaterial, itemDisplayMode, animation, animationInterval, billboard, glow, glowInterval);
+                        displayType, itemMaterial, customModelData, itemModel, nexoId, blockMaterial, itemDisplayMode, animation, animationInterval, billboard, glow, glowInterval, headTexture);
             }
         }
     }

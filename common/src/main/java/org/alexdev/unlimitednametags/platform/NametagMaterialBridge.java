@@ -18,5 +18,12 @@ public interface NametagMaterialBridge {
     }
 
     @Nullable
+    default Object resolveItemStack(@NotNull java.util.UUID ownerId, @NotNull String materialKey,
+            @Nullable Integer customModelData, @Nullable String itemModel, @Nullable String nexoId,
+            @Nullable String headTexture) {
+        return resolveItemStack(ownerId, materialKey, customModelData, itemModel, nexoId);
+    }
+
+    @Nullable
     Object resolveBlockState(@NotNull java.util.UUID ownerId, @NotNull String materialKey);
 }

@@ -6,6 +6,9 @@ import net.jodah.expiringmap.ExpirationPolicy;
 import net.jodah.expiringmap.ExpiringMap;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.object.ObjectContents;
+import net.kyori.adventure.text.object.PlayerHeadObjectContents;
 import org.alexdev.unlimitednametags.UnlimitedNameTags;
 import org.alexdev.unlimitednametags.config.Advanced;
 import org.alexdev.unlimitednametags.config.Formatter;
@@ -15,6 +18,7 @@ import org.alexdev.unlimitednametags.hook.HelmetRuleDebugThrottle;
 import org.alexdev.unlimitednametags.hook.HelmetRuleDiagnostics;
 import org.alexdev.unlimitednametags.hook.hat.HatHook;
 import org.alexdev.unlimitednametags.hook.hat.HatHookPaper;
+import org.alexdev.unlimitednametags.platform.BukkitNametagMaterialBridge;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +54,7 @@ public class PlaceholderManager {
     private static final Pattern RELATIONAL_PATTERN = Pattern.compile("%(rel|relational)_[a-zA-Z0-9_]+%");
 
     private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("%.*?%", Pattern.DOTALL);
+    private static final Pattern FLAG_PATTERN = Pattern.compile("%flags?%");
     private static final JoinConfiguration JOIN_CONFIGURATION = JoinConfiguration.separator(Component.newline());
 
     private static final String ELSE_PLACEHOLDER = "ELSE";
@@ -522,13 +527,29 @@ public class PlaceholderManager {
 
     @NotNull
     private Component format(@NotNull String value, @NotNull Player player) {
+        final Component formatted;
         if (plugin.getConfigManager().getSettings().getPerformance().isComponentCaching()) {
-            return cachedComponents.computeIfAbsent(value, v ->
+            formatted = cachedComponents.computeIfAbsent(value, v ->
                     Formatter.from(plugin.getConfigManager().getSettings().getBehavior().getFormat()).format(plugin, player, v)
             );
+        } else {
+            formatted = Formatter.from(plugin.getConfigManager().getSettings().getBehavior().getFormat()).format(plugin, player, value);
         }
+        if (!FLAG_PATTERN.matcher(value).find()) {
+            return formatted;
+        }
+        return replaceFlagPlaceholders(formatted, getCachedPlaceholder(player, "%geolocation_countryCode%"));
+    }
 
-        return Formatter.from(plugin.getConfigManager().getSettings().getBehavior().getFormat()).format(plugin, player, value);
+    @NotNull
+    static Component replaceFlagPlaceholders(@NotNull Component text, @Nullable String countryCode) {
+        final String country = countryCode == null ? "KH" : countryCode.trim().toUpperCase(Locale.ROOT);
+        final String texture = Settings.FLAG_TEXTURES.getOrDefault("flag_" + country, Settings.CAMBODIA_FLAG_TEXTURE);
+        final String value = BukkitNametagMaterialBridge.textureValue(texture, Map.of());
+        final Component flag = Component.object(ObjectContents.playerHead()
+                .profileProperty(PlayerHeadObjectContents.property("textures", value)).build())
+                .color(NamedTextColor.WHITE);
+        return text.replaceText(builder -> builder.match(FLAG_PATTERN).replacement(flag));
     }
 
     @NotNull
@@ -609,6 +630,9 @@ public class PlaceholderManager {
 
     @NotNull
     public String getCachedPlaceholder(@NotNull Player player, @NotNull String placeholder) {
+        if (FLAG_PATTERN.matcher(placeholder).matches()) {
+            return placeholder;
+        }
         final ExpiringMap<String, String> playerCache = getCachedPlaceholders(player);
         final String cached = playerCache.get(placeholder);
         if (cached != null) return cached;
