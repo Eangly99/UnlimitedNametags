@@ -96,10 +96,23 @@ supported by Minecraft **1.21.9+** clients. No resource pack or separate ITEM ro
 To select the flag from the owner's IP, install PlaceholderAPI and its
 [Geolocation expansion](https://api.extendedclip.com/expansions/geolocation/) with
 `/papi ecloud download Geolocation` and `/papi reload`. The plugin reads
-`%geolocation_countryCode%` automatically. Cambodia (`flag_KH`) and the US (`flag_US`)
-are built into the code; no texture configuration is needed. Other countries fall back to Cambodia.
+`%geolocation_countryCode%` automatically. Textures for all **249 ISO country/territory codes**, plus
+Kosovo (`XK`), are bundled in the jar; no texture configuration is needed.
+Missing or invalid country lookup still falls back to Cambodia. Vietnam (`VN`) is included.
 The obsolete `headTextures` section is removed on startup/reload after backing up the settings file.
 The Cambodia texture is from [MC-Heads](https://mc-heads.com/skulls/4672d426-53d9-49e8-b84c-41af7764fe77).
+
+The bundled [texture catalogue](common/src/main/resources/country-flags.properties) is based on
+[Minecraft Heads](https://minecraft-heads.com/) via its [CSV mirror](https://github.com/TheLuca98/MinecraftHeads).
+Territories without dedicated heads use these flags: `AI`, `VG`, `KY`, `FK`, `IM`, `MS`, `PN`,
+`GS`, `SH`, `TC` → `GB`; `BV`, `SJ` → `NO`; `BQ` → `NL`; `HM` → `AU`; `MF` → `FR`;
+`TK` → `NZ`; `UM` → `US`. Afghanistan uses the catalogue's older flag design.
+
+If a VPN reconnect still shows Cambodia, run `/papi parse me %geolocation_countryCode%` in game.
+For a Vietnam connection it must return `VN`. An unchanged placeholder means the expansion is
+missing; `API Down` or `invalid identifier` means the lookup failed. If it returns `KH`, check
+the VPN connection and proxy IP forwarding. UnlimitedNameTags clears its placeholder cache on quit;
+[Geolocation owns the IP lookup and its own cache](https://github.com/PlaceholderAPI/Geolocation-Expansion/blob/master/src/main/java/me/itsnathang/placeholders/Geolocation.java).
 
 ## Head texture ITEM rows
 
@@ -120,7 +133,8 @@ nameTags:
 ```
 
 `headTexture` accepts `owner`, a Base64 `textures` property, a Minecraft texture URL,
-or a built-in flag key (`flag_KH` or `flag_US`). It expands placeholders for the nametag owner.
+or a built-in flag key (`flag_<ISO country code>`, such as `flag_KH`, `flag_VN`, or `flag_US`).
+It expands placeholders for the nametag owner.
 Omitting `itemMaterial` selects `PLAYER_HEAD` when a texture is configured; explicit
 materials must be `PLAYER_HEAD`. The existing `itemDisplayMode` defaults to `HEAD`.
 Nexo items keep precedence and ignore `headTexture`.
@@ -128,7 +142,8 @@ Nexo items keep precedence and ignore `headTexture`.
 Country detection uses the player's IP through [PlaceholderAPI's Geolocation expansion](https://api.extendedclip.com/expansions/geolocation/).
 With PlaceholderAPI installed, run `/papi ecloud download Geolocation` and `/papi reload`.
 The expansion handles the IP lookup; UnlimitedNameTags selects the built-in texture.
-Cambodia and the US are included in code. The US texture comes from [Minecraft Heads](https://minecraft-heads.com/custom-heads/head/70017-united-states-of-america).
+All ISO country/territory codes and Kosovo are included in the bundled catalogue, with the
+territory/legacy exceptions described above. The US texture comes from [Minecraft Heads](https://minecraft-heads.com/custom-heads/head/70017-united-states-of-america).
 Other GeoIP plugins can supply a country-code placeholder in the same way.
 Unresolved placeholders, missing texture keys, and invalid textures clear the row;
 compact stacking leaves no gap for it. IP geolocation reflects the connecting IP,

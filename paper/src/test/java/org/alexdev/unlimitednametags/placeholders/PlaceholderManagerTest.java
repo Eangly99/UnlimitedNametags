@@ -12,8 +12,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PlaceholderManagerTest {
@@ -43,6 +46,31 @@ class PlaceholderManagerTest {
         final Component line = Component.text("%flags% Team");
         final Component result = PlaceholderManager.replaceFlagPlaceholders(line, " us ");
         assertTrue(textureJson((PlayerHeadObjectContents) flags(result).getFirst().contents()).contains(us));
+    }
+
+    @Test
+    void everyIsoCountryAndKosovoHaveRenderableBuiltInFlags() {
+        for (String country : Locale.getISOCountries()) {
+            final String texture = Settings.FLAG_TEXTURES.get("flag_" + country);
+            assertNotNull(texture, "missing flag for " + country);
+            final Component result = PlaceholderManager.replaceFlagPlaceholders(Component.text("%flag%"), country);
+            assertTrue(textureJson((PlayerHeadObjectContents) flags(result).getFirst().contents()).contains(texture), country);
+            if (!country.equals("KH")) assertNotEquals(Settings.CAMBODIA_FLAG_TEXTURE, texture, country);
+        }
+        assertNotNull(Settings.FLAG_TEXTURES.get("flag_XK"));
+    }
+
+    @Test
+    void vietnamReconnectChangesTheSameCachedTextFromCambodiaToVietnam() {
+        final Component cachedText = Component.text("%flags% Team");
+        final Component cambodia = PlaceholderManager.replaceFlagPlaceholders(cachedText, "KH");
+        final Component vietnam = PlaceholderManager.replaceFlagPlaceholders(cachedText, " vn ");
+        final String expected = "https://textures.minecraft.net/texture/1c8b7c7fb08ab8947812bb9d14da049ed2d51ad8cb932b392c2266b257adc2ac";
+        final PlayerHeadObjectContents head = (PlayerHeadObjectContents) flags(vietnam).getFirst().contents();
+        assertEquals(expected, Settings.FLAG_TEXTURES.get("flag_VN"));
+        assertTrue(textureJson(head).contains(expected));
+        assertTrue(head.hat(), "Vietnam's yellow star is on the hat layer");
+        assertNotEquals(cambodia, vietnam);
     }
 
     private static List<ObjectComponent> flags(Component text) {

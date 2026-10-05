@@ -11,6 +11,9 @@ import me.tofaa.entitylib.meta.display.AbstractDisplayMeta;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
@@ -21,9 +24,20 @@ import java.util.function.UnaryOperator;
 public class Settings {
 
     public static final String CAMBODIA_FLAG_TEXTURE = "https://textures.minecraft.net/texture/16c526f9a335b62febe4ef3734be060e9a4906ab1792e2278b898afcfd515ea8";
-    public static final Map<String, String> FLAG_TEXTURES = Map.of(
-            "flag_KH", CAMBODIA_FLAG_TEXTURE,
-            "flag_US", "https://textures.minecraft.net/texture/46c9923bebd9ad90a80a0731c3f3b9db729b0785015e18e3ec07e4e91099be06");
+    public static final Map<String, String> FLAG_TEXTURES = loadFlagTextures();
+
+    private static Map<String, String> loadFlagTextures() {
+        final Properties hashes = new Properties();
+        try (var reader = new InputStreamReader(Objects.requireNonNull(
+                Settings.class.getResourceAsStream("/country-flags.properties")), StandardCharsets.UTF_8)) {
+            hashes.load(reader);
+        } catch (IOException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+        final Map<String, String> textures = new HashMap<>();
+        hashes.forEach((code, hash) -> textures.put("flag_" + code, "https://textures.minecraft.net/texture/" + hash));
+        return Map.copyOf(textures);
+    }
 
     @Comment({
             "Schema version for settings.yml (managed by the plugin; do not lower).",

@@ -29,8 +29,9 @@ and refresh scheduling. This is a static review plus automated tests, not a live
 The head implementation reuses ITEM rows and the existing material bridge. It adds `headTexture`
 for the owner's current profile, Base64 textures, Minecraft texture URLs, and named textures.
 Built-in flag keys can be selected using owner placeholders, including
-`flag_%geolocation_countryCode%` from the existing PlaceholderAPI integration. Cambodia and the US
-are stored in code; inline flags for other countries fall back to Cambodia. GeoIP lookup
+`flag_%geolocation_countryCode%` from the existing PlaceholderAPI integration. All 249 ISO codes
+and Kosovo are stored in a bundled resource; missing/invalid lookup falls back to Cambodia.
+Seventeen territories use parent-country flags; Afghanistan uses an older catalogue design. GeoIP lookup
 requires an external expansion/plugin. No HTTP client, IP store, head entity type, or new runtime
 dependency was added. Nexo precedence and both older DisplayGroup constructors are preserved.
 
@@ -51,8 +52,10 @@ YAML round trips, removal of obsolete texture configuration with a backup, copy 
 and both previous constructors. Live client rendering, owner
 skin changes, GeoIP resolution, and Folia scheduling still require server verification.
 
-Result: 24 common tests and 13 Paper tests passed; `:paper:shadowJar` produced
+Result: 24 common tests and 15 Paper tests passed; `:paper:shadowJar` produced
 `target/UnlimitedNametags.jar`. `git diff --check` passed.
+All 233 distinct bundled texture URLs returned valid Minecraft skin PNGs, and the flag
+resource was verified inside the shaded jar. Vietnam's yellow star is on its hat layer.
 
 Inline flags also work inside TEXT lines via `%flag%` and `%flags%`. The final formatted
 component gets a native player head image, preserving the following team's text/colors and
@@ -60,4 +63,5 @@ replacing the flag for each owner after any component cache lookup. Missing coun
 or unsupported countries fall back to Cambodia. The texture map stays in code, and the
 obsolete `headTextures` YAML section is removed using the existing migration backup path.
 Minecraft clients must support object components (1.21.9+). Additional regression checks
-cover both aliases, team formatting, normalized country codes, and Cambodia fallback.
+cover both aliases, team formatting, normalized country codes, Cambodia fallback, every ISO code,
+and changing the same cached line from Cambodia to Vietnam after a country change.
